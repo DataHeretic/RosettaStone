@@ -35,7 +35,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
 
   it ("validates cell of header or result") {
     rule ("check against different combinations")
-      { Rules.Cell } ( good =
+      { Rules.LiteralCell ~ End | Start ~ Rules.QuotedCell } ( good =
         "",
         "absd",
         "``",
@@ -51,7 +51,6 @@ class DHCompilerSpec extends FunSpec with Matchers {
         "`sdfsd",
         "` "
       )
-
   }
 //
 //  describe ("header rules") {

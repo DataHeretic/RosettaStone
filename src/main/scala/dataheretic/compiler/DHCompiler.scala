@@ -24,12 +24,17 @@ object DHCompiler {
     val ▶▶ = ▶▶▶(1)
     val ▼▼ = "\n" | "\r\n"
 
-    val Cell =
-      CharIn(('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9') ++ Seq('_', '-')).rep(0) |
-      ("`" ~ AnyChar.rep(0) ~ "`")
+    // Always captures
+    val LiteralCell =
+      CharPred(!" `\t\n\r".contains(_)).rep.!
 
-    def Headers   (in: Int) = P(▶▶▶(in--) ~ (▶▶ ~ Cell.!).rep(1))
-    def ResultRow (in: Int) = P(▶▶▶(in--) ~ (▶▶ ~ Cell.!).rep(1))
+    val QuotedCell =
+      "`" ~ CharPred(_ != '`').rep.! ~ "`"
+
+    val Cell = LiteralCell | QuotedCell
+
+    def Headers   (in: Int) = P(▶▶▶(in--) ~ (▶▶ ~ Cell).rep(1))
+    def ResultRow (in: Int) = P(▶▶▶(in--) ~ (▶▶ ~ Cell).rep(1))
 
     def Results (in: Int) = P(Headers(in).rep(1).! ~ (▼▼ ~ ResultRow(in).!).rep(0)) map {
       case (head, rows) => head -> rows
