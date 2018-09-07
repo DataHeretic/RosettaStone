@@ -1,12 +1,10 @@
-import dataheretic.compiler.DHCompiler
+import dataheretic.compiler.DHCompiler._
 import fastparse.all._
 
+(Start ~ Rules.Cell ~ End).parse("")
 
-val h1 = "\t\tid\tname\tage"
-val h2 =
-  """   hi there   rasputin""".stripMargin
 
-//Headers(2).parse(h1)
-//DHCompiler.Rules.Headers(2).parse(h2)
 
-P("abc").rep(min = 0, max = 0).parse("").get
+(Start ~ Rules.Cell ~ End).parse("`hey`") // Failure
+(Start ~ (Rules.QuotedCell  | Rules.LiteralCell) ~ End).parse("`hey`") // Success
+(Start ~ (Rules.LiteralCell ~ End | Start ~ Rules.QuotedCell) ~ End).parse("`hey`") // Failure

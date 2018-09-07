@@ -7,67 +7,83 @@ import DHCompiler._
 
 class DHCompilerSpec extends FunSpec with Matchers {
 
-  it ("validates indentation rules") {
-    rule("strictly parse a 0-length indent")
-      { Rules.▶▶▶(0) } (good = "")(bad =
-        Tokens.INDENT
+  it ("has validates the rules") {
+    rule("validate a 1-length indent") {
+      Rules.▶▶▶(1)
+    }()(bad =
+      "",
+      " ",
+      Tokens.INDENT + " "
+    )
+
+    rule("validate spacing rule between tokens") {
+      "a" ~ Rules.▶▶ ~ "b"
+    }(good =
+      "a b",
+      "a    b",
+      "a\tb",
+      "a \tb"
+    )(bad =
+      "ab",
+      " ab",
+      "ab ",
+      "a\nb",
+      "a \nb"
+    )
+
+    rule("validate the cell") {
+      Rules.LiteralCell ~ End | Start ~ Rules.QuotedCell
+    }(good =
+      "absd",
+      "``",
+      "` \n\t\r`",
+      "`dasd asdasd\t`"
+    )(bad =
+      "",
+      " hi",
+      "h i",
+      "hi ",
+      "\t",
+      " ",
+      "`",
+      "`sdfsd",
+      "` "
+    )
+
+    // Validate indentation-sensitive rules
+    for (i <- 0 to 2) {
+      val indent = (0 to (i-1)).foldLeft("") { (acc, _) => acc + Tokens.INDENT }
+
+      rule(s"validate ${i}-width indent") {
+        Rules.▶▶▶(i)
+      }(good =
+        indent
+      )(bad =
+        indent + Tokens.INDENT,
+        indent + " "
       )
 
-    rule("strictly parse the default 2-space indent")
-      { Rules.▶▶ } (good =
-        "  "
-      )( bad =
-        "",
-        " ",
-        "   ",
-        "    "
+      rule(s"validate header row with ${i}-indentation") {
+        Rules.HeaderRow(i)
+      }(good =
+        s"${indent}this",
+        s"${indent}`th at`",
+        s"${indent}something  or  `other`",
+        s"${indent}`even\nnewlines`  are  accepted"
+      )(bad =
+//        " single space indent",
+//        s"${indent} plus a single space indent",
+        s"${indent}",
+        s"${indent}${Tokens.INDENT}overly indented row",
+        s"${indent}\tha"
       )
-
-    rule ("strictly parse multiple indent")
-      { Rules.▶▶▶(2) } (good =
-        Tokens.INDENT + Tokens.INDENT
-      )( bad =
-        "",
-        Tokens.INDENT,
-        Tokens.INDENT + Tokens.INDENT + Tokens.INDENT
-      )
+    }
   }
-
-  it ("validates cell of header or result") {
-    rule ("check against different combinations")
-      { Rules.LiteralCell ~ End | Start ~ Rules.QuotedCell } ( good =
-        "",
-        "absd",
-        "``",
-        "` `",
-        "`dasd asdasd\t`"
-      ) ( bad =
-        " hi",
-        "h i",
-        "hi ",
-        "\t",
-        " ",
-        "`",
-        "`sdfsd",
-        "` "
-      )
-  }
-//
-//  describe ("header rules") {
-//    it ("should parse a header") {
-//      val header = "\thi\tthere this is\ta header"
-//
-//      Rules.Headers(1).parse(header) match {
-//        case Parsed.Success(v, i)  => println (v)
-//        case f: Parsed.Failure[_, _] => throw new Exception(f.toString())
-//      }
-//    }
-//  }
 
   def rule[T](description: String)(parser: Parser[T])(good: String*)(bad: String*) {
     println(s"> Rule: $description")
     val strictRule = Start ~ parser ~ End
-    println(s"\t > Validating parser: $strictRule")
+    println(s"\t > With parser: $strictRule")
     good foreach { s =>
       println(s"\t\t> Good:\t'$s'")
       strictRule.parse(s) match {
