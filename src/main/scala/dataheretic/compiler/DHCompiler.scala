@@ -24,11 +24,10 @@ object DHCompiler {
     import Utils._
 
     val Line = CharPred(!"\r\n".contains(_)).rep(1).!
-    val BlankLine = (" " | "\t").rep
 
     def ▶▶▶(in: Int) = INDENT rep (min = in, max = in)
     val ▶▶ = (" " | "\t") rep 1
-    val ▼▼ = BlankLine.? ~ ("\n" | "\r\n")
+    val ▼▼ = ▶▶.? ~ ("\n" | "\r\n")
 
     // Sans whitespace nor backticks
     val LiteralCell =
