@@ -23,13 +23,12 @@ object DHCompiler {
     import Tokens._
     import Utils._
 
+    val Line = CharPred(!"\r\n".contains(_)).rep(1).!
+    val BlankLine = (" " | "\t").rep
+
     def ▶▶▶(in: Int) = INDENT rep (min = in, max = in)
     val ▶▶ = (" " | "\t") rep 1
-    val ▼▼ =  "\n" | "\r\n"
-
-    val Line = CharPred(!"\r\n".contains(_)).rep(1).!
-
-    val BlankLine = (" " | "\t").rep ~ ▼▼
+    val ▼▼ = BlankLine.? ~ ("\n" | "\r\n")
 
     // Sans whitespace nor backticks
     val LiteralCell =
@@ -67,10 +66,10 @@ object DHCompiler {
       ▶▶▶(in) ~ THEN ~ ▼▼ ~ Results(in++)
 
     def TestCase(in: Int) =
-      It(in) ~ ▼▼ ~ (Given(in) ~ ▼▼).? ~ When(in) ~ ▼▼ ~ Then(in) map[AST.TestCase] { AST.TestCase.tupled }
+      It(in) ~ ▼▼ ~ (Given(in) ~ ▼▼).? ~ When(in) ~ ▼▼ ~ Then(in) map { AST.TestCase.tupled }
 
     def Ensuring(in: Int): Parser[Seq[AST.TestCase]] =
-      ▶▶▶(in) ~ ENSURING ~ ((▼▼ ~ BlankLine.?).rep ~ TestCase(in++)).rep(1)
+      ▶▶▶(in) ~ ENSURING ~ (▼▼.rep ~ TestCase(in++)).rep(1)
   }
 
   object AST {
