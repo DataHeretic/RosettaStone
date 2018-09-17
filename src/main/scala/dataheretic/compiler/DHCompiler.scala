@@ -84,7 +84,7 @@ object DHCompiler {
         It(in) ~ ▼▼ ~ (Given(in) ~ ▼▼).? ~ When(in) ~ ▼▼ ~ Then(in) map { AST.TestCase.tupled }
 
       def Ensuring(in: Int): Parser[Seq[AST.TestCase]] =
-        ▶▶▶(in) ~ ENSURING ~ (▼▼.rep ~ TestClause(in++)).rep(1)
+        ▶▶▶(in) ~ ENSURING ~ (▼▼.rep(1) ~ TestClause(in++)).rep(1)
     }
 
     object Migrations {
