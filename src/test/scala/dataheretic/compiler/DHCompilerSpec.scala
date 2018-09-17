@@ -6,7 +6,8 @@ import org.scalatest.{FunSpec, Matchers}
 import DHCompiler.Rules.General._
 import DHCompiler.Rules.SQLTests._
 import dataheretic.compiler.DHCompiler.AST._
-import dataheretic.compiler.DHCompiler.{SQLTestsTokens, CommonTokens}
+import dataheretic.compiler.DHCompiler.Rules.Migrations
+import dataheretic.compiler.DHCompiler.{AST, CommonTokens, SQLTestsTokens}
 
 class DHCompilerSpec extends FunSpec with Matchers {
 
@@ -336,6 +337,50 @@ class DHCompilerSpec extends FunSpec with Matchers {
           Seq("col1" -> "1", "col2" -> "2", "col3" -> "3"),
           Seq("col1" -> "a", "col2" -> "b", "col3" -> "c")
         ))
+    )
+  }
+
+  it ("validates a SQL Migration script") {
+    val migration = Migrations.Migration.parse(
+      """MIGRATION(1) setting up some tables
+        |UP
+        |  CREATE TABLE categories (
+        |    id    serial      PRIMARY KEY,
+        |    name  varchar(32) not null
+        |  );
+        |DOWN
+        |  drop table categories;
+        |
+        |ENSURING
+        |  it should test our clever assumptions
+        |  given
+        |    this thing right there
+        |    and that one, too
+        |  when
+        |    i do this really clever thing
+        |  then
+        |    col1 col2  `col 3`
+        |    1    `2 3`  4
+        |    a    b      c""".stripMargin).get.value
+
+    migration shouldBe AST.Migration(
+      version = 1,
+      description = "setting up some tables",
+      upSQL =
+        """CREATE TABLE categories (
+          |  id    serial      PRIMARY KEY,
+          |  name  varchar(32) not null
+          |);""".stripMargin,
+      downSQL = "drop table categories;",
+      tests = Some(Seq(
+        TestCase(
+          it = "should test our clever assumptions",
+          given = Some("this thing right there\nand that one, too"),
+          when = "i do this really clever thing",
+          `then` = Seq(
+            Seq("col1" -> "1", "col2" -> "2 3", "col 3" -> "4"),
+            Seq("col1" -> "a", "col2" -> "b", "col 3" -> "c")
+          ))))
     )
   }
 

@@ -6,8 +6,6 @@ object DHCompiler {
 
   object CommonTokens {
     val INDENT = "  " // two spaces
-    val UP = "UP"
-    val DOWN = "DOWN"
   }
 
   object SQLTestsTokens {
@@ -16,6 +14,12 @@ object DHCompiler {
     val GIVEN = "given"
     val WHEN = "when"
     val THEN = "then"
+  }
+
+  object MigrationTokens {
+    val MIGRATION = "MIGRATION"
+    val UP = "UP"
+    val DOWN = "DOWN"
   }
 
   implicit class IntExtension(v: Int) {
@@ -83,13 +87,33 @@ object DHCompiler {
         ▶▶▶(in) ~ ENSURING ~ (▼▼.rep ~ TestClause(in++)).rep(1)
     }
 
-    object SQLMigrations {
-//      def Up
+    object Migrations {
+      import General._
+      import MigrationTokens._
+      import SQLTests._
+
+      def Meta =
+        MIGRATION ~ "(" ~ CharIn('0' to '9').! ~ ")" ~ ▶▶ ~ Line map {
+          case (version, description) => (version.toInt, description)
+        }
+
+      def Up =
+        UP ~ (▼▼.rep(1) ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
+
+      def Down =
+        DOWN ~ (▼▼.rep(1) ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
+
+      def Migration =
+         Meta ~ ▼▼.rep(1) ~
+         Up ~ ▼▼.rep(1) ~
+         Down ~ ▼▼.rep(1) ~
+         Ensuring(0).? ~ ▼▼.rep map { AST.Migration.tupled }
     }
   }
 
   object AST {
     case class TestCase (it: String, given: Option[String], when: String, `then`: Seq[Seq[(String, String)]])
+    case class Migration (version: Int, description: String, upSQL: String, downSQL: String, tests: Option[Seq[TestCase]])
   }
 
   object Utils {
