@@ -22,13 +22,7 @@ object DHCompiler {
     val DOWN = "DOWN"
   }
 
-  implicit class IntExtension(v: Int) {
-    val ++ = v + 1
-    val -- = v - 1
-  }
-
   object Rules {
-
     import Utils._
 
     object General {
@@ -41,9 +35,7 @@ object DHCompiler {
       def IndentedLine (in: Int) = ▶▶▶(in) ~ Line
     }
 
-
     object SQLTests {
-
       import General._
       import SQLTestsTokens._
 
@@ -92,18 +84,19 @@ object DHCompiler {
       import MigrationTokens._
       import SQLTests._
 
-      def Meta =
-        MIGRATION ~ "(" ~ CharIn('0' to '9').! ~ ")" ~ ▶▶ ~ Line map {
-          case (version, description) => (version.toInt, description)
-        }
+      lazy val Version =
+        "(" ~ CharIn('0' to '9').rep(1).! ~ ")" map { _.toInt }
 
-      def Up =
+      lazy val Meta =
+        MIGRATION ~ ▶▶.? ~ Version ~ ▶▶ ~ Line
+
+      lazy val Up =
         UP ~ (▼▼.rep(1) ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
 
-      def Down =
+      lazy val Down =
         DOWN ~ (▼▼.rep(1) ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
 
-      def Migration =
+      lazy val Migration =
          Meta ~ ▼▼.rep(1) ~
          Up ~ ▼▼.rep(1) ~
          Down ~ ▼▼.rep(1) ~
@@ -117,10 +110,15 @@ object DHCompiler {
   }
 
   object Utils {
+
+    implicit class IntExtension(v: Int) {
+      val ++ = v + 1
+      val -- = v - 1
+    }
+
     def verifyColumnCount (header: Seq[_], rows: Seq[Seq[_]]): Boolean = {
       val columns = header.size
       rows forall { _.size == columns }
     }
   }
-
 }
