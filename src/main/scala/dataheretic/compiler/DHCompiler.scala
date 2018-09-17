@@ -4,8 +4,13 @@ import fastparse.all._
 
 object DHCompiler {
 
-  object Tokens {
+  object CommonTokens {
     val INDENT = "  " // two spaces
+    val UP = "UP"
+    val DOWN = "DOWN"
+  }
+
+  object SQLTestsTokens {
     val ENSURING = "ENSURING"
     val IT = "it"
     val GIVEN = "given"
@@ -20,55 +25,67 @@ object DHCompiler {
 
   object Rules {
 
-    import Tokens._
     import Utils._
 
-    val Line = CharPred(!"\r\n".contains(_)).rep(1).!
+    object General {
+      import CommonTokens._
+      def ▶▶▶(in: Int) = INDENT rep (min = in, max = in)
+      val ▶▶ = (" " | "\t") rep 1
+      val ▼▼ = ▶▶.? ~ ("\n" | "\r\n")
 
-    def ▶▶▶(in: Int) = INDENT rep (min = in, max = in)
-    val ▶▶ = (" " | "\t") rep 1
-    val ▼▼ = ▶▶.? ~ ("\n" | "\r\n")
-
-    // Sans whitespace nor backticks
-    val LiteralCell =
-      CharPred(!"` \t\n\r".contains(_)).rep(1).!
-
-    // Anything within the backticks goes
-    val QuotedCell =
-      "`" ~ CharPred(_ != '`').rep.! ~ "`"
-
-    // Always captures
-    val Cell = QuotedCell | LiteralCell
-
-    def IndentedLine (in: Int) = ▶▶▶(in) ~ Line
-
-    def HeaderRow (in: Int) = ▶▶▶(in) ~ Cell ~ (▶▶ ~ Cell).rep map { case (h, hs) => h +: hs }
-    def ResultRow (in: Int) = ▶▶▶(in) ~ Cell ~ (▶▶ ~ Cell).rep map { case (r, rs) => r +: rs }
-
-    def Results (in: Int) = P(HeaderRow(in) ~ (▼▼ ~ ResultRow(in)).rep) filter {
-      case (header, rows) => verifyColumnCount(header, rows)
-    } map {
-      case (header, rows) =>
-        rows map { header zip _ }
+      val Line = CharPred(!"\r\n".contains(_)).rep(1).!
+      def IndentedLine (in: Int) = ▶▶▶(in) ~ Line
     }
 
-    def It      (in: Int) =
-      ▶▶▶(in) ~ IT ~ ▶▶.? ~ Line
 
-    def Given   (in: Int) =
-      ▶▶▶(in) ~ GIVEN ~ (▼▼ ~ IndentedLine(in++)).rep(1).map { _ reduce (_.trim + "\n" + _.trim)}
+    object SQLTests {
 
-    def When    (in: Int) =
-      ▶▶▶(in) ~ WHEN  ~ (▼▼ ~ IndentedLine(in++)).rep(1).map { _ reduce (_.trim + "\n" + _.trim)}
+      import General._
+      import SQLTestsTokens._
 
-    def Then    (in: Int) =
-      ▶▶▶(in) ~ THEN ~ ▼▼ ~ Results(in++)
+      // Sans whitespace nor backticks
+      val LiteralCell =
+        CharPred(!"` \t\n\r".contains(_)).rep(1).!
 
-    def TestCase(in: Int) =
-      It(in) ~ ▼▼ ~ (Given(in) ~ ▼▼).? ~ When(in) ~ ▼▼ ~ Then(in) map { AST.TestCase.tupled }
+      // Anything within the backticks goes
+      val QuotedCell =
+        "`" ~ CharPred(_ != '`').rep.! ~ "`"
 
-    def Ensuring(in: Int): Parser[Seq[AST.TestCase]] =
-      ▶▶▶(in) ~ ENSURING ~ (▼▼.rep ~ TestCase(in++)).rep(1)
+      // Always captures
+      val Cell = QuotedCell | LiteralCell
+
+      def HeaderRow (in: Int) = ▶▶▶(in) ~ Cell ~ (▶▶ ~ Cell).rep map { case (h, hs) => h +: hs }
+      def ResultRow (in: Int) = ▶▶▶(in) ~ Cell ~ (▶▶ ~ Cell).rep map { case (r, rs) => r +: rs }
+
+      def Results (in: Int) = P(HeaderRow(in) ~ (▼▼ ~ ResultRow(in)).rep) filter {
+        case (header, rows) => verifyColumnCount(header, rows)
+      } map {
+        case (header, rows) =>
+          rows map { header zip _ }
+      }
+
+      def It      (in: Int) =
+        ▶▶▶(in) ~ IT ~ ▶▶.? ~ Line
+
+      def Given   (in: Int) =
+        ▶▶▶(in) ~ GIVEN ~ (▼▼ ~ IndentedLine(in++)).rep(1).map { _ reduce (_.trim + "\n" + _.trim)}
+
+      def When    (in: Int) =
+        ▶▶▶(in) ~ WHEN  ~ (▼▼ ~ IndentedLine(in++)).rep(1).map { _ reduce (_.trim + "\n" + _.trim)}
+
+      def Then    (in: Int) =
+        ▶▶▶(in) ~ THEN ~ ▼▼ ~ Results(in++)
+
+      def TestClause(in: Int) =
+        It(in) ~ ▼▼ ~ (Given(in) ~ ▼▼).? ~ When(in) ~ ▼▼ ~ Then(in) map { AST.TestCase.tupled }
+
+      def Ensuring(in: Int): Parser[Seq[AST.TestCase]] =
+        ▶▶▶(in) ~ ENSURING ~ (▼▼.rep ~ TestClause(in++)).rep(1)
+    }
+
+    object SQLMigrations {
+//      def Up
+    }
   }
 
   object AST {

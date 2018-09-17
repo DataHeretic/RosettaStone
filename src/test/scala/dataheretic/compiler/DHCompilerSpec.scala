@@ -3,22 +3,24 @@ package dataheretic.compiler
 import fastparse.all._
 import fastparse.core.Parsed
 import org.scalatest.{FunSpec, Matchers}
-import DHCompiler._
-import dataheretic.compiler.DHCompiler.AST.TestCase
+import DHCompiler.Rules.General._
+import DHCompiler.Rules.SQLTests._
+import dataheretic.compiler.DHCompiler.AST._
+import dataheretic.compiler.DHCompiler.{SQLTestsTokens, CommonTokens}
 
 class DHCompilerSpec extends FunSpec with Matchers {
 
   it ("validates parsing rules") {
     rule("validate a 1-length indent") {
-      Rules.▶▶▶(1)
+      ▶▶▶(1)
     }()(bad =
       "",
       " ",
-      Tokens.INDENT + " "
+      CommonTokens.INDENT + " "
     )
 
     rule("validate spacing rule between tokens") {
-      "a" ~ Rules.▶▶ ~ "b"
+      "a" ~ ▶▶ ~ "b"
     }(good =
       "a b",
       "a    b",
@@ -33,7 +35,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
     )
 
     rule("validate the cell") {
-      Rules.LiteralCell ~ End | Start ~ Rules.QuotedCell
+      LiteralCell ~ End | Start ~ QuotedCell
     }(good =
       "absd",
       "``",
@@ -52,7 +54,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
     )
 
     rule("validate a given clause with 1-width indent") {
-      Rules.Given(1)
+      Given(1)
     } () (bad =
       """
         |given
@@ -61,7 +63,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
     )
 
     rule("validate results with 1-width indent") {
-      Rules.Results(1)
+      Results(1)
     } () (bad =
       """
         |this `is not` indented
@@ -75,11 +77,11 @@ class DHCompilerSpec extends FunSpec with Matchers {
       implicit val ii = i // Seeds the case generation in the rules.
 
       rule(s"validate ${i}-width indent") {
-        Rules.▶▶▶(i)
+        ▶▶▶(i)
       }(good =
         ""
       )(bad =
-        "" + Tokens.INDENT,
+        "" + CommonTokens.INDENT,
         "" + " "
       )
 
@@ -93,20 +95,20 @@ class DHCompilerSpec extends FunSpec with Matchers {
       val badRows = Seq(
         " plus a single space indent",
         "",
-        s"${Tokens.INDENT}overly indented row",
+        s"${CommonTokens.INDENT}overly indented row",
         "\tha"
       )
 
       rule(s"validate header row with ${i}-indentation") {
-        Rules.HeaderRow(i)
+        HeaderRow(i)
       }(good = goodRows:_*)(bad = badRows:_*)
 
       rule(s"validate result row with ${i}-indentation") {
-        Rules.ResultRow(i)
+        ResultRow(i)
       }(good = goodRows:_*)(bad = badRows:_*)
 
       rule(s"validate results with ${i}-indentation") {
-        Rules.Results(i)
+        Results(i)
       } ( good =
         s"""this is  sparta
            |1 2  3
@@ -131,7 +133,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
       )
 
       rule (s"validate it-clause with ${i}-indentation") {
-        Rules.It(i)
+        It(i)
       } ( good =
         s"it was the best of times, it was the worst of times",
         s"it is"
@@ -145,12 +147,12 @@ class DHCompilerSpec extends FunSpec with Matchers {
 
       val goodGivenWhens = Seq(
         s"""GIVENWHEN
-           |${Tokens.INDENT}here's a line
-           |${Tokens.INDENT}here's another line""".stripMargin
+           |${CommonTokens.INDENT}here's a line
+           |${CommonTokens.INDENT}here's another line""".stripMargin
         ,
         s"""GIVENWHEN
-           |${Tokens.INDENT}${Tokens.INDENT} really indented line
-           |${Tokens.INDENT}here's another line""".stripMargin
+           |${CommonTokens.INDENT}${CommonTokens.INDENT} really indented line
+           |${CommonTokens.INDENT}here's another line""".stripMargin
         )
 
       val badGivenWhens = Seq(
@@ -169,14 +171,14 @@ class DHCompilerSpec extends FunSpec with Matchers {
       )
 
       rule (s"validate given-clause with ${i}-indentation") {
-        Rules.Given(i)
+        Given(i)
       } (good =
           goodGivenWhens map (_.replaceAll("GIVENWHEN", "given")): _*) (bad =
           badGivenWhens  map (_.replaceAll("GIVENWHEN", "given")): _*
         )
 
       rule (s"validate when-clause with ${i}-indentation") {
-        Rules.When(i)
+        When(i)
       } (good =
         goodGivenWhens map (_.replaceAll("GIVENWHEN", "when")): _*) (bad =
         badGivenWhens  map (_.replaceAll("GIVENWHEN", "when")): _*
@@ -200,11 +202,11 @@ class DHCompilerSpec extends FunSpec with Matchers {
       )
 
       rule (s"validate results with ${i}-indentation") {
-        Rules.Results(i)
+        Results(i)
       } (good = goodResults:_*) (bad = badResults:_*)
 
       rule (s"validate then-clause with ${i}-indentation") {
-        Rules.Then(i)
+        Then(i)
       } (good =
         s"""then
            |${goodResults(0) |>> 1 }""".stripMargin
@@ -219,12 +221,12 @@ class DHCompilerSpec extends FunSpec with Matchers {
         ,
         "then"
         ,
-        s"""${Tokens.INDENT}then
+        s"""${CommonTokens.INDENT}then
            |${goodResults(0) |>> 1 }""".stripMargin
       )
 
       rule (s"validate test case with ${i}-indentation") {
-        Rules.TestCase(i)
+        TestClause(i)
       } (good =
         """it should test our clever assumptions
           |given
@@ -271,7 +273,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
       )
 
       rule(s"validate an ensuring clause with ${i}-indentation") {
-        Rules.Ensuring(i)
+        Ensuring(i)
       } (good =
         """ENSURING
           |  it should test our clever assumptions
@@ -296,7 +298,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
   }
 
   it ("validates the Ensuring results") {
-    val ensuring = Rules.Ensuring(0).parse(
+    val ensuring = Ensuring(0).parse(
       """ENSURING
         |  it should test our clever assumptions
         |  given
@@ -370,7 +372,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
       * Indents a (multiline) string `indent`-times using Tokens.INDENT
       */
     def |>> (indent: Int): String = {
-      val in = (0 until indent).foldLeft("") { (acc, _) => acc + Tokens.INDENT }
+      val in = (0 until indent).foldLeft("") { (acc, _) => acc + CommonTokens.INDENT }
       in + s.replaceAll("\n", "\n" + in)
     }
   }
