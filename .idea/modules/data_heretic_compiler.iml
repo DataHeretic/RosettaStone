@@ -22,6 +22,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.12.6:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.github.pathikrit:better-files_2.12:3.6.0:jar" level="project" />
     <orderEntry type="library" name="sbt: com.chuusai:shapeless_2.12:2.3.3:jar" level="project" />
     <orderEntry type="library" name="sbt: com.lihaoyi:fastparse-utils_2.12:1.0.0:jar" level="project" />
     <orderEntry type="library" name="sbt: com.lihaoyi:fastparse_2.12:1.0.0:jar" level="project" />

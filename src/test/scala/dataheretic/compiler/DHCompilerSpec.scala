@@ -267,32 +267,19 @@ class DHCompilerSpec extends FunSpec with Matchers {
     }
   }
 
-  it ("validates Migrations.Version rules") {
-    rule ("validates Migrations.Version") {
-      Migrations.Version
-    } ( good =
-      "(1)", "(123)", "(0)"
-    ) (bad =
-      "", "()", "( 1)", "(1 )", "( )", "(1 1)",
-      "(1.0)", "(1a)", "(a1)"
-    )
-  }
-
   it ("validates Migrations.Meta rules") {
     rule("validates Migration.Meta") {
       Migrations.Meta
     } (good =
-      "MIGRATION(1) no space between MIGRATION and version",
-      "MIGRATION (1)  some space given"
+      "MIGRATION something or other"
     ) (bad =
-      "MIGRATION(1)nospace given from version to description",
-      "MIGRATION(1)", // no description
-      "MIGRATION no version parens"
+      "MIGRATIONnospace given",
+      "MIGRATION" // no description
     )
   }
 
   it ("validates a SQL Migration script") {
-    val migration = Migrations.Migration.parse(
+    val migration = Migrations.MigrationClause(1).parse(
       """MIGRATION(1) setting up some tables
         |UP
         |  CREATE TABLE categories (

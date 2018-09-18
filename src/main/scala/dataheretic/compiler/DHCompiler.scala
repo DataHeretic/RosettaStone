@@ -88,11 +88,8 @@ object DHCompiler {
       import MigrationTokens._
       import SQLTests._
 
-      lazy val Version =
-        "(" ~ CharIn('0' to '9').rep(1).! ~ ")" map { _.toInt }
-
       lazy val Meta =
-        MIGRATION ~ ▶▶.? ~ Version ~ ▶▶ ~ Line
+        MIGRATION ~ ▶▶ ~ Line
 
       lazy val Up =
         UP ~ (▼▼▼ ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
@@ -100,17 +97,24 @@ object DHCompiler {
       lazy val Down =
         DOWN ~ (▼▼▼ ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
 
-      lazy val Migration =
+      def MigrationClause(version: Int) =
          Meta ~ ▼▼▼ ~
          Up ~ ▼▼▼ ~
          Down ~ ▼▼▼ ~
-         Ensuring(0).? ~ ▼▼.rep map { AST.Migration.tupled }
+         Ensuring(0).? ~ ▼▼.rep map {
+           case (description, upSQL, downSQL, tests) => AST.Migration.withVersion(version)(description, upSQL, downSQL, tests)
+         }
     }
   }
 
   object AST {
     case class TestCase (it: String, given: Option[String], when: String, `then`: Seq[Seq[(String, String)]])
     case class Migration (version: Int, description: String, upSQL: String, downSQL: String, tests: Option[Seq[TestCase]])
+
+    object Migration {
+      def withVersion(version: Int)(description: String, upSQL: String, downSQL: String, tests: Option[Seq[TestCase]]): Migration =
+        new Migration(version, description, upSQL, downSQL, tests)
+    }
   }
 
   object Utils {

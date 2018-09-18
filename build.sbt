@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic"% v.circeVersion,
   "io.circe" %% "circe-parser"% v.circeVersion,
   "com.lihaoyi" %% "fastparse" % "1.0.0",
+  "com.github.pathikrit" %% "better-files" % "3.6.0",
   "org.scalactic" %% "scalactic" % v.scalatestVersion,
   "org.scalatest" %% "scalatest" % v.scalatestVersion % "test"
 )
