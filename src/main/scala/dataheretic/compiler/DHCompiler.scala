@@ -30,6 +30,7 @@ object DHCompiler {
       def ▶▶▶(in: Int) = INDENT rep (min = in, max = in)
       val ▶▶ = (" " | "\t") rep 1
       val ▼▼ = ▶▶.? ~ ("\n" | "\r\n")
+      val ▼▼▼ = ▼▼.rep(1)
 
       val Line = CharPred(!"\r\n".contains(_)).rep(1).!
       def IndentedLine (in: Int) = ▶▶▶(in) ~ Line
@@ -61,22 +62,25 @@ object DHCompiler {
       }
 
       def It      (in: Int) =
-        ▶▶▶(in) ~ IT ~ ▶▶.? ~ Line
+        ▶▶▶(in) ~ IT ~ ▶▶ ~ Line
 
       def Given   (in: Int) =
-        ▶▶▶(in) ~ GIVEN ~ (▼▼ ~ IndentedLine(in++)).rep(1).map { _ reduce (_.trim + "\n" + _.trim)}
+        ▶▶▶(in) ~ GIVEN ~ (▼▼▼ ~ IndentedLine(in++)).rep(1).map { _ reduce (_.trim + "\n" + _.trim)}
 
       def When    (in: Int) =
-        ▶▶▶(in) ~ WHEN  ~ (▼▼ ~ IndentedLine(in++)).rep(1).map { _ reduce (_.trim + "\n" + _.trim)}
+        ▶▶▶(in) ~ WHEN  ~ (▼▼▼ ~ IndentedLine(in++)).rep(1).map { _ reduce (_.trim + "\n" + _.trim)}
 
       def Then    (in: Int) =
-        ▶▶▶(in) ~ THEN ~ ▼▼ ~ Results(in++)
+        ▶▶▶(in) ~ THEN ~ ▼▼▼ ~ Results(in++)
 
       def TestClause(in: Int) =
-        It(in) ~ ▼▼ ~ (Given(in) ~ ▼▼).? ~ When(in) ~ ▼▼ ~ Then(in) map { AST.TestCase.tupled }
+        It(in) ~ ▼▼▼ ~
+        (Given(in) ~ ▼▼▼).? ~
+        When(in) ~ ▼▼▼ ~
+        Then(in) map { AST.TestCase.tupled }
 
       def Ensuring(in: Int): Parser[Seq[AST.TestCase]] =
-        ▶▶▶(in) ~ ENSURING ~ (▼▼.rep(1) ~ TestClause(in++)).rep(1)
+        ▶▶▶(in) ~ ENSURING ~ (▼▼▼ ~ TestClause(in++)).rep(1)
     }
 
     object Migrations {
@@ -91,15 +95,15 @@ object DHCompiler {
         MIGRATION ~ ▶▶.? ~ Version ~ ▶▶ ~ Line
 
       lazy val Up =
-        UP ~ (▼▼.rep(1) ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
+        UP ~ (▼▼▼ ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
 
       lazy val Down =
-        DOWN ~ (▼▼.rep(1) ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
+        DOWN ~ (▼▼▼ ~ IndentedLine(1)).rep(1) map { _ reduce (_ + "\n" + _)}
 
       lazy val Migration =
-         Meta ~ ▼▼.rep(1) ~
-         Up ~ ▼▼.rep(1) ~
-         Down ~ ▼▼.rep(1) ~
+         Meta ~ ▼▼▼ ~
+         Up ~ ▼▼▼ ~
+         Down ~ ▼▼▼ ~
          Ensuring(0).? ~ ▼▼.rep map { AST.Migration.tupled }
     }
   }

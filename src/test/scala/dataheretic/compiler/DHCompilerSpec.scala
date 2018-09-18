@@ -7,7 +7,7 @@ import DHCompiler.Rules.General._
 import DHCompiler.Rules.SQLTests._
 import dataheretic.compiler.DHCompiler.AST._
 import dataheretic.compiler.DHCompiler.Rules.Migrations
-import dataheretic.compiler.DHCompiler.{AST, CommonTokens, SQLTestsTokens}
+import dataheretic.compiler.DHCompiler.{AST, CommonTokens}
 
 class DHCompilerSpec extends FunSpec with Matchers {
 
