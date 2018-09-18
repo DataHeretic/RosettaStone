@@ -58,7 +58,7 @@ object DHCompiler {
         case (header, rows) => verifyColumnCount(header, rows)
       } map {
         case (header, rows) =>
-          rows map { header zip _ }
+          rows map { row => (header zip row).toMap }
       }
 
       def It      (in: Int) =
@@ -108,7 +108,7 @@ object DHCompiler {
   }
 
   object AST {
-    case class TestCase (it: String, given: Option[String], when: String, `then`: Seq[Seq[(String, String)]])
+    case class TestCase (it: String, given: Option[String], when: String, `then`: Seq[Map[String, String]])
     case class Migration (version: Int, description: String, upSQL: String, downSQL: String, tests: Option[Seq[TestCase]])
 
     object Migration {

@@ -316,8 +316,8 @@ class DHCompilerSpec extends FunSpec with Matchers {
           given = Some("this thing right there\nand that one, too"),
           when = "i do this really clever thing",
           `then` = Seq(
-            Seq("col1" -> "1", "col2" -> "2 3", "col 3" -> "4"),
-            Seq("col1" -> "a", "col2" -> "b", "col 3" -> "c")
+            Map("col1" -> "1", "col2" -> "2 3", "col 3" -> "4"),
+            Map("col1" -> "a", "col2" -> "b", "col 3" -> "c")
           ))))
     )
   }
