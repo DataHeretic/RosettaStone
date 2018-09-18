@@ -280,7 +280,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
 
   it ("validates a SQL Migration script") {
     val migration = Migrations.MigrationClause(1).parse(
-      """MIGRATION(1) setting up some tables
+      """MIGRATION setting up some tables
         |UP
         |  CREATE TABLE categories (
         |    id    serial      PRIMARY KEY,
