@@ -178,7 +178,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
     for (i <- 0 to 2) {
       implicit val ii = i // Seeds the case generation in the rules.
       rule (s"validate when-clause with ${i}-indentation") {
-        Given(i)
+        When(i)
       } (good =
         fixtures.goodGivenWhens map (_.replaceAll("GIVENWHEN", "when")): _*) (bad =
         fixtures.badGivenWhens  map (_.replaceAll("GIVENWHEN", "when")): _*
