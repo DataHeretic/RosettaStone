@@ -3,11 +3,11 @@ package dataheretic.compiler
 import fastparse.all._
 import fastparse.core.Parsed
 import org.scalatest.{FunSpec, Matchers}
-import DHCompiler.Rules.General._
+import DHCompiler.Rules.Common._
 import DHCompiler.Rules.SQLTests._
 import dataheretic.compiler.DHCompiler.AST._
 import dataheretic.compiler.DHCompiler.Rules.Migrations
-import dataheretic.compiler.DHCompiler.{AST, CommonTokens}
+import dataheretic.compiler.DHCompiler.{AST, CommonTokens, Utils}
 
 class DHCompilerSpec extends FunSpec with Matchers {
 
@@ -279,7 +279,7 @@ class DHCompilerSpec extends FunSpec with Matchers {
   }
 
   it ("validates a SQL Migration script") {
-    val migration = Migrations.MigrationClause(1).parse(
+    val migration = Utils.wholeInput(Migrations.MigrationClause(1)).parse(
       """MIGRATION setting up some tables
         |UP
         |  CREATE TABLE categories (
@@ -299,7 +299,8 @@ class DHCompilerSpec extends FunSpec with Matchers {
         |  then
         |    col1 col2  `col 3`
         |    1    `2 3`  4
-        |    a    b      c""".stripMargin).get.value
+        |    a    b      c
+        |""".stripMargin).get.value
 
     migration shouldBe AST.Migration(
       version = 1,
